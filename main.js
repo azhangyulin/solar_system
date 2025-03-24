@@ -1,7 +1,14 @@
 // 场景设置
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 100, 150);
+const labelRenderer = new THREE.CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+document.body.appendChild(labelRenderer.domElement);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 30, 100);
+camera.lookAt(0, 0, 0);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
@@ -32,6 +39,14 @@ const sunMaterial = new THREE.MeshPhongMaterial({
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 sun.castShadow = true;
 sun.receiveShadow = true;
+
+// 添加太阳标签
+const sunLabelDiv = document.createElement('div');
+sunLabelDiv.className = 'label';
+sunLabelDiv.textContent = 'Sun';
+const sunLabel = new THREE.CSS2DObject(sunLabelDiv);
+sunLabel.position.set(0, 6, 0);
+sun.add(sunLabel);
 scene.add(sun);
 
 // 行星数据
@@ -69,12 +84,73 @@ planets.forEach(planet => {
     scene.add(orbit);
     
     // 初始化行星位置
-    const angle = Math.random() * Math.PI * 2;
+    const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length); // 使用index获取当前行星索引
     mesh.position.x = Math.cos(angle) * planet.distance;
     mesh.position.z = Math.sin(angle) * planet.distance;
     mesh.castShadow = true;
     mesh.receiveShadow = true;
+
+    // 添加行星标签
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'label';
+    labelDiv.textContent = planet.name;
+    const label = new THREE.CSS2DObject(labelDiv);
+    label.position.set(0, planet.radius + 0.5, 0);
+    mesh.add(label);
+    
     scene.add(mesh);
+    
+    // 为有卫星的行星创建卫星系统
+    if (['Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'].includes(planet.name)) {
+        const moonCount = {
+            Earth: 1,
+            Mars: 2,
+            Jupiter: 4,
+            Saturn: 5,
+            Uranus: 3,
+            Neptune: 2
+        }[planet.name];
+        
+        for (let i = 0; i < moonCount; i++) {
+            const moonRadius = planet.radius * 0.2;
+            const moonDistance = planet.radius * 2 + i * 1.5;
+            const moonSpeed = planet.speed * 5 + Math.random() * 0.01;
+            
+            // 创建卫星
+            const moonGeometry = new THREE.SphereGeometry(moonRadius, 16, 16);
+            const moonMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+            const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            
+            // 创建卫星轨道
+            const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
+            const moonOrbitMaterial = new THREE.MeshBasicMaterial({
+                color: 0x666666,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.2
+            });
+            const moonOrbit = new THREE.Mesh(moonOrbitGeometry, moonOrbitMaterial);
+            moonOrbit.rotation.x = Math.PI / 2;
+            scene.add(moonOrbit);
+            
+            // 初始化卫星位置
+            const moonAngle = i * (Math.PI * 2 / moonCount); // 使用循环变量i计算卫星角度
+            moon.position.x = mesh.position.x + Math.cos(moonAngle) * moonDistance;
+            moon.position.z = mesh.position.z + Math.sin(moonAngle) * moonDistance;
+            moon.castShadow = true;
+            moon.receiveShadow = true;
+            scene.add(moon);
+            
+            planetMeshes.push({
+                mesh: moon,
+                speed: moonSpeed,
+                distance: moonDistance,
+                angle: moonAngle,
+                parent: mesh
+            });
+        }
+    }
+    
     planetMeshes.push({ 
         mesh, 
         speed: planet.speed,
@@ -91,17 +167,27 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 function animate() {
     requestAnimationFrame(animate);
     
-    // 更新行星位置
+    // 更新行星和卫星位置
     planetMeshes.forEach(planet => {
         planet.angle += planet.speed;
-        planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
-        planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+        
+        if (planet.parent) {
+            // 处理卫星运动
+            planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
+            planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * planet.distance;
+        } else {
+            // 处理行星运动
+            planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
+            planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+        }
     });
 
     // 更新控制器
     controls.update();
     
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+    controls.update();
 }
 
 // 处理窗口大小调整
@@ -109,6 +195,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
     controls.update();
 });
 
