@@ -4,13 +4,21 @@ const labelRenderer = new THREE.CSS2DRenderer();
 labelRenderer.setSize(window.innerWidth, window.innerHeight);
 labelRenderer.domElement.style.position = 'absolute';
 labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none'; // 防止标签拦截事件
 document.body.appendChild(labelRenderer.domElement);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 30, 100);
 camera.lookAt(0, 0, 0);
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+    antialias: true
+});
+renderer.setClearColor(0x000000, 1); // 设置黑色背景
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.domElement.style.position = 'absolute';
+renderer.domElement.style.top = '0';
+renderer.domElement.style.left = '0';
+renderer.domElement.style.zIndex = '1'; // 确保canvas在最上层
 document.body.appendChild(renderer.domElement);
 
 // 添加轨道控制器
@@ -48,10 +56,8 @@ scene.add(sunLight);
 
 // 创建太阳
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-const sunMaterial = new THREE.MeshPhongMaterial({ 
-    color: 0xffff00,
-    emissive: 0xffff00,
-    emissiveIntensity: 1
+const sunMaterial = new THREE.MeshBasicMaterial({ 
+    color: 0xffff00
 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 sun.castShadow = true;
@@ -88,17 +94,16 @@ planets.forEach(planet => {
     });
     const mesh = new THREE.Mesh(geometry, material);
     
-    // 创建轨道
-    const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.1, planet.distance + 0.1, 64);
-    const orbitMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xffffff, 
-        side: THREE.DoubleSide, 
-        transparent: true, 
-        opacity: 0.3 
-    });
-    const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-    orbit.rotation.x = Math.PI / 2;
-    scene.add(orbit);
+     // 创建轨道（注释掉轨道创建代码）
+     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.1, planet.distance + 0.1, 64);
+     const orbitMaterial = new THREE.MeshBasicMaterial({ 
+         color: 0xffffff,
+         side: THREE.DoubleSide,
+         transparent: false
+     });
+     const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+     orbit.rotation.x = Math.PI / 2;
+     scene.add(orbit);
     
     // 初始化行星位置
     const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length); // 使用index获取当前行星索引
@@ -138,17 +143,16 @@ planets.forEach(planet => {
             const moonMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
             const moon = new THREE.Mesh(moonGeometry, moonMaterial);
             
-            // 创建卫星轨道
-            const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
-            const moonOrbitMaterial = new THREE.MeshBasicMaterial({
-                color: 0x666666,
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.2
-            });
-            const moonOrbit = new THREE.Mesh(moonOrbitGeometry, moonOrbitMaterial);
-            moonOrbit.rotation.x = Math.PI / 2;
-            scene.add(moonOrbit);
+            // 创建卫星轨道（注释掉轨道创建代码）
+            // const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
+            // const moonOrbitMaterial = new THREE.MeshBasicMaterial({
+            //     color: 0x666666,
+            //     side: THREE.DoubleSide,
+            //     transparent: false
+            // });
+            // const moonOrbit = new THREE.Mesh(moonOrbitGeometry, moonOrbitMaterial);
+            // moonOrbit.rotation.x = Math.PI / 2;
+            // scene.add(moonOrbit);
             
             // 初始化卫星位置
             const moonAngle = i * (Math.PI * 2 / moonCount); // 使用循环变量i计算卫星角度
