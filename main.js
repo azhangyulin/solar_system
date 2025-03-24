@@ -14,11 +14,31 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // 添加轨道控制器
+// 确保canvas元素已正确附加到DOM
+document.body.appendChild(renderer.domElement);
+
+// 初始化OrbitControls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-controls.autoRotate = true;
-controls.autoRotateSpeed = 0.5;
+controls.autoRotate = false;
+controls.enablePan = true; // 启用默认平移
+controls.enableZoom = true; // 启用默认缩放
+controls.rotateSpeed = 0.5;
+controls.panSpeed = 0.5;
+controls.zoomSpeed = 0.5;
+controls.minDistance = 50;
+controls.maxDistance = 200;
+
+// 确保canvas元素可聚焦
+renderer.domElement.tabIndex = 1;
+renderer.domElement.style.outline = 'none';
+renderer.domElement.focus();
+
+// 添加事件监听器以确保canvas保持焦点
+renderer.domElement.addEventListener('click', () => {
+    renderer.domElement.focus();
+});
 
 // 添加环境光和太阳光
 const ambientLight = new THREE.AmbientLight(0x404040);
