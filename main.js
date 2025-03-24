@@ -95,12 +95,12 @@ planets.forEach(planet => {
     const mesh = new THREE.Mesh(geometry, material);
     
      // 创建轨道（注释掉轨道创建代码）
-     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.1, planet.distance + 0.1, 64);
-     const orbitMaterial = new THREE.MeshBasicMaterial({ 
-         color: 0xffffff,
-         side: THREE.DoubleSide,
-         transparent: false
-     });
+     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
+    const orbitMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x000090,
+        side: THREE.DoubleSide,
+        transparent: false
+    });
      const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
      orbit.rotation.x = Math.PI / 2;
      scene.add(orbit);
