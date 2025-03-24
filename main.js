@@ -14,9 +14,6 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // 添加轨道控制器
-// 确保canvas元素已正确附加到DOM
-document.body.appendChild(renderer.domElement);
-
 // 初始化OrbitControls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
@@ -207,7 +204,6 @@ function animate() {
     
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
-    controls.update();
 }
 
 // 处理窗口大小调整
