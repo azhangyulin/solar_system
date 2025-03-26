@@ -184,6 +184,49 @@ planets.forEach(planet => {
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
+// 创建星空背景
+const starCount = 5000;
+const starsGeometry = new THREE.BufferGeometry();
+const starPositions = new Float32Array(starCount * 3);
+const starSizes = new Float32Array(starCount);
+const starColors = new Float32Array(starCount * 3);
+
+for (let i = 0; i < starCount; i++) {
+    // 随机球面坐标
+    const radius = 800 + Math.random() * 200;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    
+    // 转换为笛卡尔坐标
+    starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+    starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+    starPositions[i * 3 + 2] = radius * Math.cos(phi);
+    
+    // 随机大小(0.1-0.5)
+    starSizes[i] = 0.1 + Math.random() * 0.4;
+    
+    // 随机颜色(白色或淡蓝色)
+    const isBlue = Math.random() > 0.7;
+    starColors[i * 3] = isBlue ? 0.7 + Math.random() * 0.3 : 1.0;
+    starColors[i * 3 + 1] = isBlue ? 0.8 + Math.random() * 0.2 : 1.0;
+    starColors[i * 3 + 2] = 1.0;
+}
+
+starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+starsGeometry.setAttribute('size', new THREE.BufferAttribute(starSizes, 1));
+starsGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+const starsMaterial = new THREE.PointsMaterial({
+    size: 1,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.8,
+    sizeAttenuation: true
+});
+
+const stars = new THREE.Points(starsGeometry, starsMaterial);
+scene.add(stars);
+
 // 动画循环
 function animate() {
     requestAnimationFrame(animate);
