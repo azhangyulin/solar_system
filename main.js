@@ -94,16 +94,32 @@ planets.forEach(planet => {
     });
     const mesh = new THREE.Mesh(geometry, material);
     
-     // 创建轨道（注释掉轨道创建代码）
-     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
+    // 为土星添加环
+    if (planet.name === 'Saturn') {
+        const ringGeometry = new THREE.RingGeometry(3.0, 4.5, 64);
+        const ringMaterial = new THREE.MeshPhongMaterial({
+            color: 0xffcc99,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.7,
+            shininess: 30
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        ring.rotation.z = Math.PI / 9; // 倾斜约20度
+        mesh.add(ring);
+    }
+    
+    // 创建轨道（注释掉轨道创建代码）
+    const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
     const orbitMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x000090,
         side: THREE.DoubleSide,
         transparent: false
     });
-     const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
-     orbit.rotation.x = Math.PI / 2;
-     scene.add(orbit);
+    const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbit.rotation.x = Math.PI / 2;
+    scene.add(orbit);
     
     // 初始化行星位置
     const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length); // 使用index获取当前行星索引
@@ -205,10 +221,10 @@ for (let i = 0; i < starCount; i++) {
     // 随机大小(0.1-0.5)
     starSizes[i] = 0.1 + Math.random() * 0.4;
     
-    // 随机颜色(白色或淡蓝色)
+    // 随机颜色(更亮的白色或淡蓝色)
     const isBlue = Math.random() > 0.7;
-    starColors[i * 3] = isBlue ? 0.7 + Math.random() * 0.3 : 1.0;
-    starColors[i * 3 + 1] = isBlue ? 0.8 + Math.random() * 0.2 : 1.0;
+    starColors[i * 3] = isBlue ? 0.8 + Math.random() * 0.2 : 1.0;
+    starColors[i * 3 + 1] = isBlue ? 0.9 + Math.random() * 0.1 : 1.0;
     starColors[i * 3 + 2] = 1.0;
 }
 
@@ -220,7 +236,7 @@ const starsMaterial = new THREE.PointsMaterial({
     size: 1,
     vertexColors: true,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.9,  // 提高透明度使星星更亮
     sizeAttenuation: true
 });
 
