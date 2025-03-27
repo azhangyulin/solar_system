@@ -97,43 +97,50 @@ planets.forEach(planet => {
         const texture = new THREE.TextureLoader().load('/static/textures/earth.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Jupiter') {
         const texture = new THREE.TextureLoader().load('/static/textures/jupiter.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Saturn') {
         const texture = new THREE.TextureLoader().load('/static/textures/Saturn.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Mars') {
         const texture = new THREE.TextureLoader().load('/static/textures/Mars.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Venus') {
         const texture = new THREE.TextureLoader().load('/static/textures/Venus.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Uranus') {
         const texture = new THREE.TextureLoader().load('/static/textures/Uranus.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else if (planet.name === 'Neptune') {
         const texture = new THREE.TextureLoader().load('/static/textures/Neptune.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
-            shininess: 10
+            shininess: 10,
+            transparent: true
         });
     } else {
         material = new THREE.MeshPhongMaterial({
@@ -159,15 +166,17 @@ planets.forEach(planet => {
         mesh.add(ring);
     }
 
-    // 创建轨道（注释掉轨道创建代码）
+// 创建轨道
     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
     const orbitMaterial = new THREE.MeshBasicMaterial({
         color: 0x000090,
         side: THREE.DoubleSide,
-        transparent: false
+        transparent: true
     });
     const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
     orbit.rotation.x = Math.PI / 2;
+    orbit.userData.isOrbit = true;
+    orbit.userData.originalOpacity = orbitMaterial.opacity;
     scene.add(orbit);
 
     // 初始化行星位置
@@ -205,8 +214,13 @@ planets.forEach(planet => {
 
             // 创建卫星
             const moonGeometry = new THREE.SphereGeometry(moonRadius, 16, 16);
-            const moonMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+            const moonMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0xaaaaaa,
+                transparent: true,
+                opacity: 1.0
+            });
             const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+            moon.userData.originalOpacity = 1.0;
 
             // 创建卫星轨道（注释掉轨道创建代码）
             // const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
@@ -292,6 +306,108 @@ const starsMaterial = new THREE.PointsMaterial({
 
 const stars = new THREE.Points(starsGeometry, starsMaterial);
 scene.add(stars);
+
+// 动画状态
+let isAnimating = false;
+let isSunExpanded = false;
+
+// 设置raycaster用于点击检测
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+
+// 收集所有需要淡入淡出的对象
+const fadeObjects = [];
+scene.traverse(object => {
+    if (
+        (object instanceof THREE.Mesh && 
+         (object.material?.transparent || object.userData.isOrbit)) ||
+        object instanceof THREE.CSS2DObject
+    ) {
+        fadeObjects.push(object);
+    }
+});
+
+// 添加点击事件监听
+renderer.domElement.addEventListener('click', (event) => {
+    if (isAnimating) return;
+    
+    // 计算鼠标位置
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    // 更新raycaster
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([sun]);
+    
+    if (intersects.length > 0) {
+        isAnimating = true;
+        
+        if (!isSunExpanded) {
+            // 太阳放大动画
+            gsap.to(sun.scale, {
+                x: 3.5,
+                y: 3.5,
+                z: 3.5,
+                duration: 1,
+                ease: "power2.inOut"
+            });
+            
+            // 所有相关对象淡出动画
+            fadeObjects.forEach(obj => {
+                if (obj !== sun && obj.material) {
+                    gsap.to(obj.material, {
+                        opacity: 0,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                }
+                if (obj instanceof THREE.CSS2DObject) {
+                    gsap.to(obj.element.style, {
+                        opacity: 0,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                }
+            });
+            
+            isSunExpanded = true;
+        } else {
+            // 恢复动画
+            gsap.to(sun.scale, {
+                x: 1,
+                y: 1,
+                z: 1,
+                duration: 1,
+                ease: "power2.inOut"
+            });
+            
+            // 所有相关对象淡入动画
+            fadeObjects.forEach(obj => {
+                if (obj !== sun && obj.material) {
+                    gsap.to(obj.material, {
+                        opacity: obj.userData.originalOpacity || 1,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                }
+                if (obj instanceof THREE.CSS2DObject) {
+                    gsap.to(obj.element.style, {
+                        opacity: 1,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                }
+            });
+            
+            isSunExpanded = false;
+        }
+        
+        // 动画完成后重置状态
+        setTimeout(() => {
+            isAnimating = false;
+        }, 1000);
+    }
+});
 
 // 动画循环
 function animate() {
