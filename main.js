@@ -95,6 +95,12 @@ planets.forEach(planet => {
             map: texture,
             shininess: 10
         });
+    } else if (planet.name === 'Jupiter') {
+        const texture = new THREE.TextureLoader().load('textures/jupiter.jpg');
+        material = new THREE.MeshPhongMaterial({ 
+            map: texture,
+            shininess: 10
+        });
     } else {
         material = new THREE.MeshPhongMaterial({ 
             color: planet.color,
