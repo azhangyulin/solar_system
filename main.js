@@ -74,14 +74,14 @@ scene.add(sun);
 
 // 行星数据
 const planets = [
-    { name: 'Mercury', radius: 0.4, distance: 10, color: 0x8c8c8c, speed: 0.02 },
-    { name: 'Venus', radius: 0.9, distance: 15, color: 0xe6b800, speed: 0.015 },
-    { name: 'Earth', radius: 1, distance: 20, color: 0x0000ff, speed: 0.01 },
-    { name: 'Mars', radius: 0.5, distance: 25, color: 0xff3300, speed: 0.008 },
-    { name: 'Jupiter', radius: 2.5, distance: 35, color: 0xff9966, speed: 0.005 },
-    { name: 'Saturn', radius: 2, distance: 45, color: 0xffcc99, speed: 0.003 },
-    { name: 'Uranus', radius: 1.5, distance: 55, color: 0x66ccff, speed: 0.002 },
-    { name: 'Neptune', radius: 1.5, distance: 65, color: 0x0000cc, speed: 0.001 }
+    { name: 'Mercury', radius: 0.4, distance: 10, color: 0x8c8c8c, speed: 0.01 },
+    { name: 'Venus', radius: 0.9, distance: 15, color: 0xe6b800, speed: 0.0075 },
+    { name: 'Earth', radius: 1, distance: 20, color: 0x0000ff, speed: 0.005 },
+    { name: 'Mars', radius: 0.5, distance: 25, color: 0xff3300, speed: 0.004 },
+    { name: 'Jupiter', radius: 2.5, distance: 35, color: 0xff9966, speed: 0.0025 },
+    { name: 'Saturn', radius: 2, distance: 45, color: 0xffcc99, speed: 0.0015 },
+    { name: 'Uranus', radius: 1.5, distance: 55, color: 0x66ccff, speed: 0.001 },
+    { name: 'Neptune', radius: 1.5, distance: 65, color: 0x0000cc, speed: 0.0005 }
 ];
 
 // 创建行星
