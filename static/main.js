@@ -56,8 +56,12 @@ scene.add(sunLight);
 
 // 创建太阳
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-const sunMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffff00
+const sunTexture = new THREE.TextureLoader().load('/static/textures/sun.jpg');
+const sunMaterial = new THREE.MeshPhongMaterial({
+    map: sunTexture,
+    shininess: 10,
+    emissive: 0xffff00,
+    emissiveIntensity: 0.5
 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 sun.castShadow = true;
@@ -195,8 +199,8 @@ planets.forEach(planet => {
         }[planet.name];
 
         for (let i = 0; i < moonCount; i++) {
-            const moonRadius = planet.radius * 0.2;
-            const moonDistance = planet.radius * 2 + i * 1.5;
+            const moonRadius = planet.radius * 0.18;
+            const moonDistance = planet.radius * 2 + i * 0.6;
             const moonSpeed = planet.speed * 5 + Math.random() * 0.01;
 
             // 创建卫星
@@ -292,6 +296,9 @@ scene.add(stars);
 // 动画循环
 function animate() {
     requestAnimationFrame(animate);
+
+    // 更新太阳自转
+    sun.rotation.y += 0.001; 
 
     // 更新行星和卫星位置
     planetMeshes.forEach(planet => {
