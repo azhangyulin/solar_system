@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>3D Earth Model</title>
     <style>
         body { 
@@ -26,7 +27,7 @@
 
         // 创建地球
         const geometry = new THREE.SphereGeometry(5, 32, 32);
-        const texture = new THREE.TextureLoader().load('textures/earth.jpg');
+        const texture = new THREE.TextureLoader().load('textures/jupiter.jpg');
         const material = new THREE.MeshBasicMaterial({ map: texture });
         const earth = new THREE.Mesh(geometry, material);
         scene.add(earth);
