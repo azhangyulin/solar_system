@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // 初始化场景、相机和渲染器
         const scene = new THREE.Scene();
@@ -27,7 +27,7 @@
 
         // 创建地球
         const geometry = new THREE.SphereGeometry(5, 32, 32);
-        const texture = new THREE.TextureLoader().load('textures/jupiter.jpg');
+        const texture = new THREE.TextureLoader().load('textures/jupiter.jpg?' + Date.now());
         const material = new THREE.MeshBasicMaterial({ map: texture });
         const earth = new THREE.Mesh(geometry, material);
         scene.add(earth);

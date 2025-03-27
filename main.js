@@ -10,7 +10,7 @@ document.body.appendChild(labelRenderer.domElement);
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 30, 100);
 camera.lookAt(0, 0, 0);
-const renderer = new THREE.WebGLRenderer({ 
+const renderer = new THREE.WebGLRenderer({
     antialias: true
 });
 renderer.setClearColor(0x000000, 1); // 设置黑色背景
@@ -56,7 +56,7 @@ scene.add(sunLight);
 
 // 创建太阳
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-const sunMaterial = new THREE.MeshBasicMaterial({ 
+const sunMaterial = new THREE.MeshBasicMaterial({
     color: 0xffff00
 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
@@ -91,24 +91,48 @@ planets.forEach(planet => {
     let material;
     if (planet.name === 'Earth') {
         const texture = new THREE.TextureLoader().load('textures/earth.jpg');
-        material = new THREE.MeshPhongMaterial({ 
+        material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Jupiter') {
         const texture = new THREE.TextureLoader().load('textures/jupiter.jpg');
-        material = new THREE.MeshPhongMaterial({ 
+        material = new THREE.MeshPhongMaterial({
+            map: texture,
+            shininess: 10
+        });
+    } else if (planet.name === 'Saturn') {
+        const texture = new THREE.TextureLoader().load('textures/Saturn.jpg');
+        material = new THREE.MeshPhongMaterial({
+            map: texture,
+            shininess: 10
+        });
+    } else if (planet.name === 'Mars') {
+        const texture = new THREE.TextureLoader().load('textures/Mars.jpg');
+        material = new THREE.MeshPhongMaterial({
+            map: texture,
+            shininess: 10
+        });
+    } else if (planet.name === 'Venus') {
+        const texture = new THREE.TextureLoader().load('textures/Venus.jpg');
+        material = new THREE.MeshPhongMaterial({
+            map: texture,
+            shininess: 10
+        });
+    } else if (planet.name === 'Uranus') {
+        const texture = new THREE.TextureLoader().load('textures/Uranus.jpg');
+        material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else {
-        material = new THREE.MeshPhongMaterial({ 
+        material = new THREE.MeshPhongMaterial({
             color: planet.color,
             shininess: 10
         });
     }
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     // 为土星添加环
     if (planet.name === 'Saturn') {
         const ringGeometry = new THREE.RingGeometry(3.0, 4.5, 64);
@@ -124,10 +148,10 @@ planets.forEach(planet => {
         ring.rotation.z = Math.PI / 9; // 倾斜约20度
         mesh.add(ring);
     }
-    
+
     // 创建轨道（注释掉轨道创建代码）
     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
-    const orbitMaterial = new THREE.MeshBasicMaterial({ 
+    const orbitMaterial = new THREE.MeshBasicMaterial({
         color: 0x000090,
         side: THREE.DoubleSide,
         transparent: false
@@ -135,7 +159,7 @@ planets.forEach(planet => {
     const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
     orbit.rotation.x = Math.PI / 2;
     scene.add(orbit);
-    
+
     // 初始化行星位置
     const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length); // 使用index获取当前行星索引
     mesh.position.x = Math.cos(angle) * planet.distance;
@@ -150,9 +174,9 @@ planets.forEach(planet => {
     const label = new THREE.CSS2DObject(labelDiv);
     label.position.set(0, planet.radius + 0.5, 0);
     mesh.add(label);
-    
+
     scene.add(mesh);
-    
+
     // 为有卫星的行星创建卫星系统
     if (['Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune'].includes(planet.name)) {
         const moonCount = {
@@ -163,17 +187,17 @@ planets.forEach(planet => {
             Uranus: 3,
             Neptune: 2
         }[planet.name];
-        
+
         for (let i = 0; i < moonCount; i++) {
             const moonRadius = planet.radius * 0.2;
             const moonDistance = planet.radius * 2 + i * 1.5;
             const moonSpeed = planet.speed * 5 + Math.random() * 0.01;
-            
+
             // 创建卫星
             const moonGeometry = new THREE.SphereGeometry(moonRadius, 16, 16);
             const moonMaterial = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
             const moon = new THREE.Mesh(moonGeometry, moonMaterial);
-            
+
             // 创建卫星轨道（注释掉轨道创建代码）
             // const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
             // const moonOrbitMaterial = new THREE.MeshBasicMaterial({
@@ -184,7 +208,7 @@ planets.forEach(planet => {
             // const moonOrbit = new THREE.Mesh(moonOrbitGeometry, moonOrbitMaterial);
             // moonOrbit.rotation.x = Math.PI / 2;
             // scene.add(moonOrbit);
-            
+
             // 初始化卫星位置
             const moonAngle = i * (Math.PI * 2 / moonCount); // 使用循环变量i计算卫星角度
             moon.position.x = mesh.position.x + Math.cos(moonAngle) * moonDistance;
@@ -192,7 +216,7 @@ planets.forEach(planet => {
             moon.castShadow = true;
             moon.receiveShadow = true;
             scene.add(moon);
-            
+
             planetMeshes.push({
                 mesh: moon,
                 speed: moonSpeed,
@@ -202,9 +226,9 @@ planets.forEach(planet => {
             });
         }
     }
-    
-    planetMeshes.push({ 
-        mesh, 
+
+    planetMeshes.push({
+        mesh,
         speed: planet.speed,
         distance: planet.distance,
         angle: angle
@@ -227,15 +251,15 @@ for (let i = 0; i < starCount; i++) {
     const radius = 800 + Math.random() * 200;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    
+
     // 转换为笛卡尔坐标
     starPositions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
     starPositions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
     starPositions[i * 3 + 2] = radius * Math.cos(phi);
-    
+
     // 随机大小(0.1-0.5)
     starSizes[i] = 0.1 + Math.random() * 0.4;
-    
+
     // 随机颜色(更亮的白色或淡蓝色)
     const isBlue = Math.random() > 0.7;
     starColors[i * 3] = isBlue ? 0.8 + Math.random() * 0.2 : 1.0;
@@ -261,11 +285,11 @@ scene.add(stars);
 // 动画循环
 function animate() {
     requestAnimationFrame(animate);
-    
+
     // 更新行星和卫星位置
     planetMeshes.forEach(planet => {
         planet.angle += planet.speed;
-        
+
         if (planet.parent) {
             // 处理卫星运动
             planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
@@ -279,7 +303,7 @@ function animate() {
 
     // 更新控制器
     controls.update();
-    
+
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
 }
