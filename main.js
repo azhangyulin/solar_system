@@ -125,6 +125,12 @@ planets.forEach(planet => {
             map: texture,
             shininess: 10
         });
+    } else if (planet.name === 'Neptune') {
+        const texture = new THREE.TextureLoader().load('textures/Neptune.jpg');
+        material = new THREE.MeshPhongMaterial({
+            map: texture,
+            shininess: 10
+        });
     } else {
         material = new THREE.MeshPhongMaterial({
             color: planet.color,
@@ -231,7 +237,8 @@ planets.forEach(planet => {
         mesh,
         speed: planet.speed,
         distance: planet.distance,
-        angle: angle
+        angle: angle,
+        rotationSpeed: planet.speed * 10 // 自转速度比公转快10倍
     });
 });
 
@@ -298,6 +305,10 @@ function animate() {
             // 处理行星运动
             planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
             planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+            // 添加行星自转
+            if (planet.rotationSpeed) {
+                planet.mesh.rotation.y += planet.rotationSpeed;
+            }
         }
     });
 
