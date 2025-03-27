@@ -90,43 +90,43 @@ planets.forEach(planet => {
     const geometry = new THREE.SphereGeometry(planet.radius, 32, 32);
     let material;
     if (planet.name === 'Earth') {
-        const texture = new THREE.TextureLoader().load('textures/earth.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/earth.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Jupiter') {
-        const texture = new THREE.TextureLoader().load('textures/jupiter.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/jupiter.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Saturn') {
-        const texture = new THREE.TextureLoader().load('textures/Saturn.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/Saturn.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Mars') {
-        const texture = new THREE.TextureLoader().load('textures/Mars.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/Mars.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Venus') {
-        const texture = new THREE.TextureLoader().load('textures/Venus.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/Venus.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Uranus') {
-        const texture = new THREE.TextureLoader().load('textures/Uranus.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/Uranus.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
         });
     } else if (planet.name === 'Neptune') {
-        const texture = new THREE.TextureLoader().load('textures/Neptune.jpg');
+        const texture = new THREE.TextureLoader().load('/static/textures/Neptune.jpg');
         material = new THREE.MeshPhongMaterial({
             map: texture,
             shininess: 10
