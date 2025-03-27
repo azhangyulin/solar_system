@@ -1,0 +1,16 @@
+{
+  "name": "solar_system",
+  "version": "1.0.0",
+  "main": "main.js",
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "scripts": {
+    "start": "concurrently \"http-server\" \"start http://localhost:8080/index.html\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}

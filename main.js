@@ -88,10 +88,19 @@ const planets = [
 const planetMeshes = [];
 planets.forEach(planet => {
     const geometry = new THREE.SphereGeometry(planet.radius, 32, 32);
-    const material = new THREE.MeshPhongMaterial({ 
-        color: planet.color,
-        shininess: 10
-    });
+    let material;
+    if (planet.name === 'Earth') {
+        const texture = new THREE.TextureLoader().load('textures/earth.jpg');
+        material = new THREE.MeshPhongMaterial({ 
+            map: texture,
+            shininess: 10
+        });
+    } else {
+        material = new THREE.MeshPhongMaterial({ 
+            color: planet.color,
+            shininess: 10
+        });
+    }
     const mesh = new THREE.Mesh(geometry, material);
     
     // 为土星添加环
