@@ -345,9 +345,9 @@ renderer.domElement.addEventListener('click', (event) => {
         if (!isSunExpanded) {
             // 太阳放大动画
             gsap.to(sun.scale, {
-                x: 3.5,
-                y: 3.5,
-                z: 3.5,
+                x: 6.5,
+                y: 6.5,
+                z: 6.5,
                 duration: 1,
                 ease: "power2.inOut"
             });
