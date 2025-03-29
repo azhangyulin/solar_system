@@ -315,14 +315,23 @@ let isSunExpanded = false;
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// 收集所有需要淡入淡出的对象
+// 收集所有需要淡入淡出的对象(包括太阳、行星、卫星、轨道和标签)
 const fadeObjects = [];
 scene.traverse(object => {
-    if (
-        (object instanceof THREE.Mesh && 
-         (object.material?.transparent || object.userData.isOrbit)) ||
-        object instanceof THREE.CSS2DObject
-    ) {
+    // 收集所有3D对象(太阳、行星、卫星、轨道)
+    if (object instanceof THREE.Mesh) {
+        // 确保材质存在且可设置透明度
+        if (object.material) {
+            // 记录原始透明度
+            object.userData.originalOpacity = object.material.opacity;
+            // 强制启用透明
+            object.material.transparent = true;
+        }
+        fadeObjects.push(object);
+    }
+    // 收集所有标签
+    else if (object instanceof THREE.CSS2DObject) {
+        object.userData.originalOpacity = parseFloat(object.element.style.opacity) || 1;
         fadeObjects.push(object);
     }
 });
@@ -335,14 +344,25 @@ renderer.domElement.addEventListener('click', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     
-    // 更新raycaster
+    // 更新raycaster并增加检测半径
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects([sun]);
+    // 检测太阳和所有行星
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    // 过滤出太阳或行星
+    const filteredIntersects = intersects.filter(obj => {
+        return obj.object === sun || 
+               planetMeshes.some(p => p.mesh === obj.object);
+    });
     
-    if (intersects.length > 0) {
+    if (filteredIntersects.length > 0) {
+        const clickedObj = filteredIntersects[0].object;
         isAnimating = true;
         
-        if (!isSunExpanded) {
+        // 确定点击的是太阳还是行星
+        const isSunClicked = clickedObj === sun;
+        const isPlanetClicked = planetMeshes.some(p => p.mesh === clickedObj);
+        
+        if (isSunClicked && !isSunExpanded) {
             // 太阳放大动画
             gsap.to(sun.scale, {
                 x: 6.5,
@@ -371,6 +391,82 @@ renderer.domElement.addEventListener('click', (event) => {
             });
             
             isSunExpanded = true;
+        } else if (isPlanetClicked) {
+            const clickedPlanet = planetMeshes.find(p => p.mesh === clickedObj);
+            if (clickedPlanet) {
+                if (!clickedPlanet.isSelected) {
+                    // 第一次点击 - 进入选中状态
+                    clickedPlanet.isSelected = true;
+                    clickedPlanet.originalSpeed = clickedPlanet.speed;
+                    clickedPlanet.speed = 0; // 停止公转
+                    
+                    // 放大行星
+                    gsap.to(clickedPlanet.mesh.scale, {
+                        x: 5.5,
+                        y: 5.5,
+                        z: 5.5,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                    
+                    // 淡出其他所有物体(包括太阳、行星、卫星和标签)
+                    fadeObjects.forEach(obj => {
+                        // 跳过被点击行星及其标签
+                        if (obj === clickedPlanet.mesh || 
+                            (obj instanceof THREE.CSS2DObject && obj === clickedPlanet.mesh.children[0])) {
+                            return;
+                        }
+                        
+                        // 处理3D对象材质
+                        if (obj.material) {
+                            gsap.to(obj.material, {
+                                opacity: 0,
+                                duration: 1,
+                                ease: "power2.inOut"
+                            });
+                        }
+                        // 处理标签
+                        if (obj instanceof THREE.CSS2DObject) {
+                            gsap.to(obj.element.style, {
+                                opacity: 0,
+                                duration: 1,
+                                ease: "power2.inOut"
+                            });
+                        }
+                    });
+                } else {
+                    // 第二次点击 - 恢复初始状态
+                    clickedPlanet.isSelected = false;
+                    clickedPlanet.speed = clickedPlanet.originalSpeed; // 恢复公转
+                    
+                    // 恢复行星大小
+                    gsap.to(clickedPlanet.mesh.scale, {
+                        x: 1,
+                        y: 1,
+                        z: 1,
+                        duration: 1,
+                        ease: "power2.inOut"
+                    });
+                    
+                    // 淡入所有物体
+                    fadeObjects.forEach(obj => {
+                        if (obj.material) {
+                            gsap.to(obj.material, {
+                                opacity: obj.userData.originalOpacity || 1,
+                                duration: 1,
+                                ease: "power2.inOut"
+                            });
+                        }
+                        if (obj instanceof THREE.CSS2DObject) {
+                            gsap.to(obj.element.style, {
+                                opacity: 1,
+                                duration: 1,
+                                ease: "power2.inOut"
+                            });
+                        }
+                    });
+                }
+            }
         } else {
             // 恢复动画
             gsap.to(sun.scale, {
