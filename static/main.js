@@ -215,9 +215,45 @@ planets.forEach(planet => {
         }[planet.name];
 
         for (let i = 0; i < moonCount; i++) {
-            const moonRadius = planet.radius * 0.18;
-            const moonDistance = planet.radius * 2 + i * 0.6;
-            const moonSpeed = planet.speed * 5 + Math.random() * 0.01;
+            let moonRadius, moonDistance, moonSpeed;
+
+            // 针对不同行星设置卫星参数
+            switch (planet.name) {
+            case 'Earth':
+                moonRadius = 0.27; // 真实的月球半径约为地球的0.27倍
+                moonDistance = 3; // 地球半径的3倍
+                moonSpeed = 0.005; // 月球公转速度
+                break;
+            case 'Mars':
+                moonRadius = 0.08; // 火卫一和火卫二都比较小，半径约为火星的0.08倍
+                moonDistance = i === 0 ? 1.5 : 2.3; // 火卫一距离火星较近
+                moonSpeed = i === 0 ? 0.008 : 0.006; // 火卫一速度稍快
+                break;
+            case 'Jupiter':
+                moonRadius = 0.2;
+                moonDistance = planet.radius * 2 + i * 1.1;
+                moonSpeed = 0.004 + Math.random() * 0.001;
+                break;
+            case 'Saturn':
+                moonRadius = 0.15;
+                moonDistance = planet.radius * 1.8 + i * 0.9;
+                moonSpeed = 0.003 + Math.random() * 0.0008;
+                break;
+            case 'Uranus':
+                moonRadius = 0.12;
+                moonDistance = planet.radius * 1.5 + i * 0.7;
+                moonSpeed = 0.002 + Math.random() * 0.0006;
+                break;
+            case 'Neptune':
+                moonRadius = 0.22;
+                moonDistance = planet.radius * 2 + i * 1;
+                moonSpeed = 0.0015 + Math.random() * 0.0005;
+                break;
+            default:
+                moonRadius = planet.radius * 0.18;
+                moonDistance = planet.radius * 2 + i * 0.6;
+                moonSpeed = planet.speed * 5 + Math.random() * 0.01;
+            }
 
             // 创建卫星
             const moonGeometry = new THREE.SphereGeometry(moonRadius, 16, 16);
