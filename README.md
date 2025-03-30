@@ -19,23 +19,28 @@
 - [Three.js](https://threejs.org/) - 3D渲染引擎
 - [GSAP](https://greensock.com/gsap/) - 动画库
 - [CSS2DRenderer](https://threejs.org/docs/#examples/en/renderers/CSS2DRenderer) - 标签渲染
+- Flask - Python后端框架
 
 ## 安装与运行
 
-1. 确保已安装Node.js (建议版本16+)
+1. 确保已安装Python 3.8+和Node.js 16+
 2. 克隆本项目：
    ```bash
    git clone https://github.com/your-repo/solar-system.git
    ```
-3. 安装依赖：
+3. 安装Python依赖：
+   ```bash
+   pip install flask
+   ```
+4. 安装前端依赖：
    ```bash
    npm install
    ```
-4. 启动开发服务器：
+5. 启动Flask服务器：
    ```bash
-   npm start
+   python app.py
    ```
-5. 在浏览器中打开 http://localhost:5000
+6. 在浏览器中打开 http://localhost:5000
 
 ## 项目结构
 
@@ -44,12 +49,23 @@ solar-system/
 ├── static/                  # 静态资源
 │   ├── main.js              # 主程序入口
 │   ├── three.min.js         # Three.js库
-│   ├── textures/            # 行星纹理图片
-│   └── style.css            # 样式表
+│   ├── CSS2DRenderer.js     # 标签渲染器
+│   ├── OrbitControls.js     # 轨道控制器
+│   ├── style.css            # 样式表
+│   └── textures/            # 行星纹理图片
+│       ├── sun.jpg          # 太阳纹理
+│       ├── earth.jpg        # 地球纹理
+│       ├── jupiter.jpg      # 木星纹理
+│       ├── Mars.jpg         # 火星纹理
+│       ├── Neptune.jpg      # 海王星纹理
+│       ├── Saturn.jpg       # 土星纹理
+│       ├── Uranus.jpg       # 天王星纹理
+│       └── Venus.jpg        # 金星纹理
 ├── templates/               # HTML模板
 │   └── index.html           # 主页面
 ├── app.py                   # Flask后端
 ├── package.json             # 项目配置
+├── package-lock.json        # 依赖锁定文件
 └── README.md                # 本文件
 ```
 
