@@ -90,6 +90,9 @@ const planets = [
 
 // 创建行星
 const planetMeshes = [];
+// 存储轨道对象
+const orbitObjects = [];
+
 planets.forEach(planet => {
     const geometry = new THREE.SphereGeometry(planet.radius, 32, 32);
     let material;
@@ -166,7 +169,7 @@ planets.forEach(planet => {
         mesh.add(ring);
     }
 
-// 创建轨道
+    // 创建轨道
     const orbitGeometry = new THREE.RingGeometry(planet.distance - 0.05, planet.distance + 0.05, 128);
     const orbitMaterial = new THREE.MeshBasicMaterial({
         color: 0x000090,
@@ -178,9 +181,10 @@ planets.forEach(planet => {
     orbit.userData.isOrbit = true;
     orbit.userData.originalOpacity = orbitMaterial.opacity;
     scene.add(orbit);
+    orbitObjects.push(orbit); // 将轨道对象存储到专门的数组中
 
     // 初始化行星位置
-    const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length); // 使用index获取当前行星索引
+    const angle = planets.indexOf(planet) * (Math.PI * 2 / planets.length);
     mesh.position.x = Math.cos(angle) * planet.distance;
     mesh.position.z = Math.sin(angle) * planet.distance;
     mesh.castShadow = true;
@@ -222,19 +226,8 @@ planets.forEach(planet => {
             const moon = new THREE.Mesh(moonGeometry, moonMaterial);
             moon.userData.originalOpacity = 1.0;
 
-            // 创建卫星轨道（注释掉轨道创建代码）
-            // const moonOrbitGeometry = new THREE.RingGeometry(moonDistance - 0.05, moonDistance + 0.05, 32);
-            // const moonOrbitMaterial = new THREE.MeshBasicMaterial({
-            //     color: 0x666666,
-            //     side: THREE.DoubleSide,
-            //     transparent: false
-            // });
-            // const moonOrbit = new THREE.Mesh(moonOrbitGeometry, moonOrbitMaterial);
-            // moonOrbit.rotation.x = Math.PI / 2;
-            // scene.add(moonOrbit);
-
             // 初始化卫星位置
-            const moonAngle = i * (Math.PI * 2 / moonCount); // 使用循环变量i计算卫星角度
+            const moonAngle = i * (Math.PI * 2 / moonCount);
             moon.position.x = mesh.position.x + Math.cos(moonAngle) * moonDistance;
             moon.position.z = mesh.position.z + Math.sin(moonAngle) * moonDistance;
             moon.castShadow = true;
@@ -310,15 +303,17 @@ scene.add(stars);
 // 动画状态
 let isAnimating = false;
 let isSunExpanded = false;
+// 保存初始位置和状态
+const originalPositions = new Map();
 
 // 设置raycaster用于点击检测
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
-// 收集所有需要淡入淡出的对象(包括太阳、行星、卫星、轨道和标签)
+// 收集所有需要淡入淡出的对象(包括太阳、行星、卫星和标签)
 const fadeObjects = [];
 scene.traverse(object => {
-    // 收集所有3D对象(太阳、行星、卫星、轨道)
+    // 收集所有3D对象(太阳、行星、卫星)
     if (object instanceof THREE.Mesh) {
         // 确保材质存在且可设置透明度
         if (object.material) {
@@ -377,15 +372,22 @@ renderer.domElement.addEventListener('click', (event) => {
                 if (obj !== sun && obj.material) {
                     gsap.to(obj.material, {
                         opacity: 0,
-                        duration: 1,
-                        ease: "power2.inOut"
+                        duration: 0.5,
+                        ease: "power2.inOut",
+                        onComplete: function() {
+                            // 完全隐藏物体，而不仅仅是透明
+                            obj.visible = false;
+                        }
                     });
                 }
-                if (obj instanceof THREE.CSS2DObject) {
+                if (obj instanceof THREE.CSS2DObject && obj !== sunLabel) {
                     gsap.to(obj.element.style, {
                         opacity: 0,
-                        duration: 1,
-                        ease: "power2.inOut"
+                        duration: 0.5,
+                        ease: "power2.inOut",
+                        onComplete: function() {
+                            obj.visible = false;
+                        }
                     });
                 }
             });
@@ -397,47 +399,149 @@ renderer.domElement.addEventListener('click', (event) => {
                 if (!clickedPlanet.isSelected) {
                     // 第一次点击 - 进入选中状态
                     clickedPlanet.isSelected = true;
+                    clickedPlanet.mesh.userData.isSelected = true; // 在mesh上也标记选中状态
+                    
+                    // 保存初始位置和公转信息
+                    if (!originalPositions.has(clickedPlanet)) {
+                        originalPositions.set(clickedPlanet, {
+                            position: clickedPlanet.mesh.position.clone(),
+                            speed: clickedPlanet.speed,
+                            distance: clickedPlanet.distance
+                        });
+                    }
+                    
+                    // 停止公转但保持自转
                     clickedPlanet.originalSpeed = clickedPlanet.speed;
-                    clickedPlanet.speed = 0; // 停止公转
+                    clickedPlanet.speed = 0;
+                    
+                    // 找到该行星的所有卫星
+                    const moons = planetMeshes.filter(p => p.parent === clickedPlanet.mesh);
+                    
+                    // 保存卫星的初始状态
+                    moons.forEach(moon => {
+                        if (!originalPositions.has(moon)) {
+                            originalPositions.set(moon, {
+                                position: moon.mesh.position.clone(),
+                                distance: moon.distance
+                            });
+                        }
+                    });
                     
                     // 放大行星
+                    // 如果是土星，稍微放大一些以便更好地显示土星环
+                    const scaleAmount = clickedPlanet.mesh.children.length > 0 && clickedPlanet.mesh.children[0] instanceof THREE.Mesh ? 4.5 : 3.5;
                     gsap.to(clickedPlanet.mesh.scale, {
-                        x: 5.5,
-                        y: 5.5,
-                        z: 5.5,
+                        x: scaleAmount,
+                        y: scaleAmount,
+                        z: scaleAmount,
                         duration: 1,
                         ease: "power2.inOut"
                     });
                     
-                    // 淡出其他所有物体(包括太阳、行星、卫星和标签)
+                    // 移动行星到屏幕左侧中间位置
+                    gsap.to(clickedPlanet.mesh.position, {
+                        x: -20,  // 移动到左侧中间
+                        y: 0,    // 保持y坐标不变
+                        z: 0,    // 移到z=0的位置使其正对相机
+                        duration: 1.5,
+                        ease: "power2.inOut"
+                    });
+                    
+                    // 特别处理轨道，确保它们完全不可见
+                    orbitObjects.forEach(orbit => {
+                        // 先淡出再隐藏
+                        gsap.to(orbit.material, {
+                            opacity: 0,
+                            duration: 0.5,
+                            ease: "power2.inOut",
+                            onComplete: function() {
+                                orbit.visible = false; // 彻底隐藏轨道
+                            }
+                        });
+                    });
+                    
+                    // 淡出其他所有物体(包括太阳、行星、卫星和标签)，但保留选中行星及其卫星和土星环
                     fadeObjects.forEach(obj => {
-                        // 跳过被点击行星及其标签
+                        // 跳过被点击行星及其所有子对象(包括标签和土星环)
                         if (obj === clickedPlanet.mesh || 
-                            (obj instanceof THREE.CSS2DObject && obj === clickedPlanet.mesh.children[0])) {
+                           clickedPlanet.mesh.children.includes(obj)) {
                             return;
                         }
+                        
+                        // 跳过该行星的卫星及其标签
+                        let isMoon = false;
+                        for (const moon of moons) {
+                            if (obj === moon.mesh || 
+                                (obj instanceof THREE.CSS2DObject && moon.mesh.children.includes(obj))) {
+                                isMoon = true;
+                                break;
+                            }
+                        }
+                        if (isMoon) return;
                         
                         // 处理3D对象材质
                         if (obj.material) {
                             gsap.to(obj.material, {
                                 opacity: 0,
-                                duration: 1,
-                                ease: "power2.inOut"
+                                duration: 0.5,
+                                ease: "power2.inOut",
+                                onComplete: function() {
+                                    // 完全隐藏物体，而不仅仅是透明
+                                    obj.visible = false;
+                                }
                             });
                         }
                         // 处理标签
                         if (obj instanceof THREE.CSS2DObject) {
                             gsap.to(obj.element.style, {
                                 opacity: 0,
-                                duration: 1,
-                                ease: "power2.inOut"
+                                duration: 0.5,
+                                ease: "power2.inOut",
+                                onComplete: function() {
+                                    obj.visible = false;
+                                }
                             });
                         }
                     });
+                    
+                    // 更新相机位置以更好地观察行星
+                    gsap.to(camera.position, {
+                        x: -10,
+                        y: 10,
+                        z: 30,
+                        duration: 1.5,
+                        ease: "power2.inOut",
+                        onUpdate: function() {
+                            camera.lookAt(clickedPlanet.mesh.position);
+                        }
+                    });
+                    
+                    // 禁用轨道控制器
+                    controls.enabled = false;
+                    
                 } else {
                     // 第二次点击 - 恢复初始状态
                     clickedPlanet.isSelected = false;
-                    clickedPlanet.speed = clickedPlanet.originalSpeed; // 恢复公转
+                    clickedPlanet.mesh.userData.isSelected = false; // 清除mesh上的选中状态
+                    
+                    // 找到该行星的所有卫星
+                    const moons = planetMeshes.filter(p => p.parent === clickedPlanet.mesh);
+                    
+                    // 恢复行星原始公转信息
+                    const originalData = originalPositions.get(clickedPlanet);
+                    if (originalData) {
+                        clickedPlanet.speed = originalData.speed;
+                        clickedPlanet.distance = originalData.distance;
+                        
+                        // 恢复行星位置
+                        gsap.to(clickedPlanet.mesh.position, {
+                            x: Math.cos(clickedPlanet.angle) * clickedPlanet.distance,
+                            y: 0,
+                            z: Math.sin(clickedPlanet.angle) * clickedPlanet.distance,
+                            duration: 1.5,
+                            ease: "power2.inOut"
+                        });
+                    }
                     
                     // 恢复行星大小
                     gsap.to(clickedPlanet.mesh.scale, {
@@ -448,8 +552,37 @@ renderer.domElement.addEventListener('click', (event) => {
                         ease: "power2.inOut"
                     });
                     
+                    // 恢复相机位置
+                    gsap.to(camera.position, {
+                        x: 0,
+                        y: 30,
+                        z: 100,
+                        duration: 1.5,
+                        ease: "power2.inOut",
+                        onUpdate: function() {
+                            camera.lookAt(0, 0, 0);
+                        },
+                        onComplete: function() {
+                            // 重新启用轨道控制器
+                            controls.enabled = true;
+                        }
+                    });
+                    
+                    // 特别处理轨道，确保它们恢复可见
+                    orbitObjects.forEach(orbit => {
+                        orbit.visible = true; // 先恢复可见性
+                        gsap.to(orbit.material, {
+                            opacity: orbit.userData.originalOpacity || 1,
+                            duration: 1,
+                            ease: "power2.inOut"
+                        });
+                    });
+                    
                     // 淡入所有物体
                     fadeObjects.forEach(obj => {
+                        // 先恢复可见性
+                        obj.visible = true;
+                        
                         if (obj.material) {
                             gsap.to(obj.material, {
                                 opacity: obj.userData.originalOpacity || 1,
@@ -479,6 +612,9 @@ renderer.domElement.addEventListener('click', (event) => {
             
             // 所有相关对象淡入动画
             fadeObjects.forEach(obj => {
+                // 先恢复可见性
+                obj.visible = true;
+                
                 if (obj !== sun && obj.material) {
                     gsap.to(obj.material, {
                         opacity: obj.userData.originalOpacity || 1,
@@ -501,7 +637,7 @@ renderer.domElement.addEventListener('click', (event) => {
         // 动画完成后重置状态
         setTimeout(() => {
             isAnimating = false;
-        }, 1000);
+        }, 1500);
     }
 });
 
@@ -518,16 +654,24 @@ function animate() {
 
         if (planet.parent) {
             // 处理卫星运动
-            planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
-            planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * planet.distance;
-        } else {
-            // 处理行星运动
+            if (planet.parent.userData.isSelected) {
+                // 如果父行星被选中，卫星应围绕新位置旋转
+                planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
+                planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * planet.distance;
+            } else {
+                // 正常卫星运动
+                planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
+                planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * planet.distance;
+            }
+        } else if (!planet.isSelected) {
+            // 处理未被选中的行星运动
             planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
             planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
-            // 添加行星自转
-            if (planet.rotationSpeed) {
-                planet.mesh.rotation.y += planet.rotationSpeed;
-            }
+        }
+        
+        // 添加行星自转(无论是否被选中)
+        if (planet.rotationSpeed) {
+            planet.mesh.rotation.y += planet.rotationSpeed;
         }
     });
 
