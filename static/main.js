@@ -455,6 +455,10 @@ renderer.domElement.addEventListener('click', (event) => {
                     // 放大行星
                     // 如果是土星，稍微放大一些以便更好地显示土星环
                     const scaleAmount = clickedPlanet.mesh.children.length > 0 && clickedPlanet.mesh.children[0] instanceof THREE.Mesh ? 4.5 : 3.5;
+                    
+                    // 保存缩放比例，供卫星轨道距离计算使用
+                    clickedPlanet.scaleAmount = scaleAmount;
+                    
                     gsap.to(clickedPlanet.mesh.scale, {
                         x: scaleAmount,
                         y: scaleAmount,
@@ -473,9 +477,10 @@ renderer.domElement.addEventListener('click', (event) => {
                         onUpdate: function() {
                             // 在动画过程中同步更新所有卫星位置
                             moons.forEach(moon => {
-                                // 保持卫星与行星的相对位置关系
-                                moon.mesh.position.x = clickedPlanet.mesh.position.x + Math.cos(moon.angle) * moon.distance;
-                                moon.mesh.position.z = clickedPlanet.mesh.position.z + Math.sin(moon.angle) * moon.distance;
+                                // 保持卫星与行星的相对位置关系，并将轨道距离乘以缩放比例
+                                const scaledDistance = moon.distance * clickedPlanet.scaleAmount;
+                                moon.mesh.position.x = clickedPlanet.mesh.position.x + Math.cos(moon.angle) * scaledDistance;
+                                moon.mesh.position.z = clickedPlanet.mesh.position.z + Math.sin(moon.angle) * scaledDistance;
                             });
                         }
                     });
@@ -583,7 +588,7 @@ renderer.domElement.addEventListener('click', (event) => {
                             x: targetX,
                             y: 0,
                             z: targetZ,
-                            duration: 0.01,
+                            duration: 0.005,
                             ease: "power2.inOut",
                             onUpdate: function() {
                                 // 在动画过程中同步更新所有卫星位置
@@ -734,9 +739,13 @@ function animate() {
         if (planet.parent) {
             // 处理卫星运动
             if (planet.parent.userData.isSelected) {
-                // 如果父行星被选中，卫星应围绕新位置旋转
-                planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
-                planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * planet.distance;
+                // 找到对应的行星对象，以获取scaleAmount
+                const parentPlanet = planetMeshes.find(p => p.mesh === planet.parent);
+                // 计算缩放后的距离
+                const scaledDistance = planet.distance * (parentPlanet ? parentPlanet.scaleAmount || 1 : 1);
+                // 如果父行星被选中，卫星应围绕新位置旋转，并使用缩放后的距离
+                planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * scaledDistance;
+                planet.mesh.position.z = planet.parent.position.z + Math.sin(planet.angle) * scaledDistance;
             } else {
                 // 正常卫星运动
                 planet.mesh.position.x = planet.parent.position.x + Math.cos(planet.angle) * planet.distance;
