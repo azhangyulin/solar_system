@@ -54,6 +54,9 @@ const sunLight = new THREE.PointLight(0xffffff, 1, 500);
 sunLight.position.set(0, 0, 0);
 scene.add(sunLight);
 
+// 保存原始光源，以便在行星缩小时恢复
+const originalLights = [ambientLight, sunLight];
+
 // 创建太阳
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
 const sunTexture = new THREE.TextureLoader().load('/static/textures/sun.jpg');
@@ -427,6 +430,28 @@ renderer.domElement.addEventListener('click', (event) => {
                         }
                     });
                     
+                    // 移除原有光源
+                    originalLights.forEach(light => {
+                        scene.remove(light);
+                    });
+                    
+                    // 为选中的行星添加新的聚光灯
+                    const planetSpotLight = new THREE.SpotLight(0xffffff, 1.5);
+                    planetSpotLight.position.set(-30, 15, 30);
+                    planetSpotLight.target = clickedPlanet.mesh;
+                    planetSpotLight.angle = Math.PI / 6;
+                    planetSpotLight.penumbra = 0.2;
+                    planetSpotLight.decay = 1;
+                    planetSpotLight.distance = 200;
+                    scene.add(planetSpotLight);
+                    
+                    // 添加微弱的环境光以避免完全黑暗
+                    const dimAmbientLight = new THREE.AmbientLight(0x202020, 0.5);
+                    scene.add(dimAmbientLight);
+                    
+                    // 保存新添加的光源
+                    clickedPlanet.customLights = [planetSpotLight, dimAmbientLight];
+                    
                     // 放大行星
                     // 如果是土星，稍微放大一些以便更好地显示土星环
                     const scaleAmount = clickedPlanet.mesh.children.length > 0 && clickedPlanet.mesh.children[0] instanceof THREE.Mesh ? 4.5 : 3.5;
@@ -552,6 +577,19 @@ renderer.domElement.addEventListener('click', (event) => {
                         ease: "power2.inOut"
                     });
                     
+                    // 移除自定义光源
+                    if (clickedPlanet.customLights) {
+                        clickedPlanet.customLights.forEach(light => {
+                            scene.remove(light);
+                        });
+                        clickedPlanet.customLights = null;
+                    }
+                    
+                    // 恢复原始光源
+                    originalLights.forEach(light => {
+                        scene.add(light);
+                    });
+                    
                     // 恢复相机位置
                     gsap.to(camera.position, {
                         x: 0,
@@ -608,6 +646,19 @@ renderer.domElement.addEventListener('click', (event) => {
                 z: 1,
                 duration: 1,
                 ease: "power2.inOut"
+            });
+            
+            // 如果太阳放大时添加了自定义光源，移除它们
+            if (sun.userData.customLights) {
+                sun.userData.customLights.forEach(light => {
+                    scene.remove(light);
+                });
+                sun.userData.customLights = null;
+            }
+            
+            // 恢复原始光源
+            originalLights.forEach(light => {
+                scene.add(light);
             });
             
             // 所有相关对象淡入动画
