@@ -469,7 +469,15 @@ renderer.domElement.addEventListener('click', (event) => {
                         y: 0,    // 保持y坐标不变
                         z: 0,    // 移到z=0的位置使其正对相机
                         duration: 1.5,
-                        ease: "power2.inOut"
+                        ease: "power2.inOut",
+                        onUpdate: function() {
+                            // 在动画过程中同步更新所有卫星位置
+                            moons.forEach(moon => {
+                                // 保持卫星与行星的相对位置关系
+                                moon.mesh.position.x = clickedPlanet.mesh.position.x + Math.cos(moon.angle) * moon.distance;
+                                moon.mesh.position.z = clickedPlanet.mesh.position.z + Math.sin(moon.angle) * moon.distance;
+                            });
+                        }
                     });
                     
                     // 特别处理轨道，确保它们完全不可见
@@ -552,19 +560,39 @@ renderer.domElement.addEventListener('click', (event) => {
                     // 找到该行星的所有卫星
                     const moons = planetMeshes.filter(p => p.parent === clickedPlanet.mesh);
                     
+                    // 从fadeObjects中临时移除卫星，避免它们被淡入淡出处理
+                    const moonMeshes = moons.map(moon => moon.mesh);
+                    const moonObjectsToRemove = fadeObjects.filter(obj => 
+                        moonMeshes.includes(obj) || 
+                        moonMeshes.some(moon => moon.children.includes(obj))
+                    );
+                    const tempFadeObjects = fadeObjects.filter(obj => !moonObjectsToRemove.includes(obj));
+                    
                     // 恢复行星原始公转信息
                     const originalData = originalPositions.get(clickedPlanet);
                     if (originalData) {
                         clickedPlanet.speed = originalData.speed;
                         clickedPlanet.distance = originalData.distance;
                         
+                        // 计算行星的目标位置
+                        const targetX = Math.cos(clickedPlanet.angle) * clickedPlanet.distance;
+                        const targetZ = Math.sin(clickedPlanet.angle) * clickedPlanet.distance;
+                        
                         // 恢复行星位置
                         gsap.to(clickedPlanet.mesh.position, {
-                            x: Math.cos(clickedPlanet.angle) * clickedPlanet.distance,
+                            x: targetX,
                             y: 0,
-                            z: Math.sin(clickedPlanet.angle) * clickedPlanet.distance,
-                            duration: 1.5,
-                            ease: "power2.inOut"
+                            z: targetZ,
+                            duration: 0.01,
+                            ease: "power2.inOut",
+                            onUpdate: function() {
+                                // 在动画过程中同步更新所有卫星位置
+                                moons.forEach(moon => {
+                                    // 保持卫星与行星的相对位置关系
+                                    moon.mesh.position.x = clickedPlanet.mesh.position.x + Math.cos(moon.angle) * moon.distance;
+                                    moon.mesh.position.z = clickedPlanet.mesh.position.z + Math.sin(moon.angle) * moon.distance;
+                                });
+                            }
                         });
                     }
                     
@@ -616,8 +644,8 @@ renderer.domElement.addEventListener('click', (event) => {
                         });
                     });
                     
-                    // 淡入所有物体
-                    fadeObjects.forEach(obj => {
+                    // 只对非卫星物体进行淡入处理
+                    tempFadeObjects.forEach(obj => {
                         // 先恢复可见性
                         obj.visible = true;
                         
